@@ -16,11 +16,11 @@ class KalmanFilter:
                 initial_x(float): Initial estimation of the x location.
                 initial_v(float): Initial estimation of the velocity magnitude.
                 accel_variance(float): Variance of acceleration disturbance"""
-        # Mean of state GRV
+        # Mean of state Gaussian Random Variable
         self._x = np.zeros(self.NUMVARS)
         self._x[self.iX] = initial_x
         self._x[self.iV] = initial_v
-        # Covariance of state GRV
+        # Covariance of state Gaussian Random Variable
         self._P = np.eye(self.NUMVARS)
         self._accel_variance = accel_variance  # Process noise
         self._I = np.eye(self.NUMVARS)
