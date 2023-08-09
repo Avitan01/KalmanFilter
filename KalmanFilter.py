@@ -6,20 +6,32 @@ class KalmanFilter:
     iX = 0
     iV = 1
     NUMVARS = iV + 1
+    iA = 0
+    iG = 1
+    NUMINPS = iG + 1
 
     def __init__(self,
                  initial_x: float,
                  initial_v: float,
+                 initial_a: float,
+                 initial_g: float,
                  accel_variance: float) -> None:
         """Create a Kalman Filter object
             Args:
                 initial_x(float): Initial estimation of the x location.
                 initial_v(float): Initial estimation of the velocity magnitude.
+                initial_a(float): Initial known acceleration profile.
+                initial_g(float): Initial known gravity acceleration.
                 accel_variance(float): Variance of acceleration disturbance"""
         # Mean of state Gaussian Random Variable
         self._x = np.zeros(self.NUMVARS)
         self._x[self.iX] = initial_x
         self._x[self.iV] = initial_v
+        # Input vector
+        self._u = np.zeros(self.NUMINPS)
+        self._u[self.iA] = initial_a
+        self._u[self.iG] = initial_g
+        self._Q = 0  # Inputs covariance
         # Covariance of state Gaussian Random Variable
         self._P = np.eye(self.NUMVARS)
         self._accel_variance = accel_variance  # Process noise
@@ -31,17 +43,24 @@ class KalmanFilter:
                 dt(float): Time step interval"""
         Phi = np.eye(self.NUMVARS)
         Phi[self.iX, self.iV] = dt  # Transition matrix
-        self._x = Phi.dot(self._x)
+        Psi = np.zeros((self.NUMINPS, self.NUMINPS))
+        Psi[self.iA] = [0.5 * dt ** 2, -0.5 * dt ** 2]
+        Psi[self.iG] = [dt, -dt]
         Gamma = np.zeros((2, 1))  # Process noise matrix
         Gamma[self.iX] = 0.5 * dt ** 2
         Gamma[self.iV] = dt
-        self._P = Phi.dot(self._P).dot(Phi.T) + Gamma.dot(Gamma.T) * self._accel_variance
+        self._x = Phi.dot(self._x) + Psi.dot(self._u)
+        self._P = Phi.dot(self._P).dot(Phi.T) + Psi.dot(self._Q).dot(Psi.T) + Gamma.dot(Gamma.T) * self._accel_variance
 
-    def update(self, meas_values: float, meas_variance: float) -> None:
+    def update(self, meas_values: float, meas_variance: float, input_update: list = None) -> None:
         """Update the estimation of the state and covariance according to the newly acquired measurements
             Args:
                 meas_values(float): The measured values obtained.
-                meas_variance(float): The measured variance obtained"""
+                meas_variance(float): The measured variance obtained.
+                input_update(list): List of values of input."""
+        if input_update:
+            for i, val in enumerate(input_update):
+                self._u[i] = val
         # self._x/P through the method refers to the estimation of x(k+1|k)
         # self._x/P at the last lines refers to the estimation of x(k+1|k+1)
         H = np.array([1, 0]).reshape((1, 2))  # Observation matrix

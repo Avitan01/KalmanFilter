@@ -1,61 +1,64 @@
 import matplotlib.pyplot as plt
+import matplotlib
+import addcopyfighandler
 import numpy as np
 
 from KalmanFilter import KalmanFilter as KF
 from Rocket import Rocket
+matplotlib.use('TkAgg')
 
-plt.ion()  # Enable interactive mode
-plt.figure()
 
-rocket = Rocket(initial_height=0.0, initial_velocity=0.0, initial_acceleration=0.0,
-                launch_duration=162, total_duration=800)
+fig = plt.figure()
+# Simulation parameters
+booster_time = 20  # 162
+flight_time = booster_time
+h0, v0, a0 = 0.0, 0.0, 0.0
+kh0, kv0, ka0 = 0.0, 0.0, 0.0
+accel_var = 5000
+R_covariance = 2 ** 2
+MEAS_EVERY_SECONDS = 1
 
-rocket.launch()
-# print(rocket.flight_log)
-# plt.plot(rocket.time, rocket.flight_log)
+rocket = Rocket(initial_height=h0, initial_velocity=v0, initial_acceleration=a0,
+                launch_duration=booster_time, total_duration=flight_time)
 
-# # Real Process
-# real_x = 0.0
-# meas_variance = 0.1**2
-# real_v = 0.9
-#
-kf = KF(initial_x=0.0, initial_v=0.0, accel_variance=0.1)
-#
-# DT = 0.1
-# NUM_STEPS = 1000
-# MEAS_EVERY_STEPS = 20
-#
-# mus, covs, real_xs, real_vs = [], [], [], []
-#
-# for step in range(NUM_STEPS):
-#     mus.append(kf.mean)
-#     covs.append(kf.cov)
-#     real_x += DT * real_v
-#     kf.predict(dt=DT)
-#     if (step != 0) and (step % MEAS_EVERY_STEPS) == 0:
-#         kf.update(meas_values=real_x + np.random.rand() * np.sqrt(meas_variance),
-#                   meas_variance=meas_variance)
-#     real_xs.append(real_x)
-#     real_vs.append(real_v)
-#
-# # Plot estimation
-# plt.subplot(2, 1, 1)
-# plt.title('Position')
-# plt.plot([mu[0] for mu in mus], 'r')
-# plt.plot(real_xs, 'b')
-# plt.plot([mu[0] - 2*np.sqrt(cov[0, 0]) for mu, cov in zip(mus, covs)], 'r--')
-# plt.plot([mu[0] + 2*np.sqrt(cov[0, 0]) for mu, cov in zip(mus, covs)], 'r--')
-#
-# plt.subplot(2, 1, 2)
-# plt.title('Velocity')
-# plt.plot([mu[1] for mu in mus], 'r')
-# plt.plot(real_vs, 'b')
-# plt.plot([mu[1] - 2*np.sqrt(cov[1, 1]) for mu, cov in zip(mus, covs)], 'r--')
-# plt.plot([mu[1] + 2*np.sqrt(cov[1, 1]) for mu, cov in zip(mus, covs)], 'r--')
-#
+kf = KF(initial_x=kh0, initial_v=kv0, initial_a=ka0, initial_g=9.81, accel_variance=accel_var)
+
+mus, covs, real_xs, real_vs = [], [], [], []
+DT = rocket.time_interval
+
+for time in rocket.time_vec:
+    if time > rocket.flight_duration:
+        break
+    mus.append(kf.mean)
+    covs.append(kf.cov)
+    rocket.update_flight(time, DT)
+    kf.predict(dt=DT)
+    if (time != 0) and (time % MEAS_EVERY_SECONDS) == 0:
+        kf.update(meas_values=rocket.pos + np.random.rand() * np.sqrt(R_covariance),
+                  meas_variance=R_covariance, input_update=[rocket.accel, 9.81])
+        real_xs.append(rocket.pos)
+        real_vs.append(rocket.vel)
+
+# Plot estimation
+plt.subplot(2, 1, 1)
+plt.title('Height', fontsize=18)
+plt.plot(rocket.flight_log['h'], 'b')
+plt.plot([mu[0] for mu in mus], 'r')
+plt.plot([mu[0] - 2 * np.sqrt(cov[0, 0]) for mu, cov in zip(mus, covs)], 'r--')
+plt.plot([mu[0] + 2 * np.sqrt(cov[0, 0]) for mu, cov in zip(mus, covs)], 'r--')
+plt.xlabel('Time [s]', fontsize=16)
+plt.ylabel('Height [m]', fontsize=16)
+
+plt.subplot(2, 1, 2)
+plt.title('Velocity', fontsize=18)
+plt.plot(rocket.flight_log['v'], 'b')
+plt.plot([mu[1] for mu in mus], 'r')
+plt.plot([mu[1] - 2 * np.sqrt(cov[1, 1]) for mu, cov in zip(mus, covs)], 'r--')
+plt.plot([mu[1] + 2 * np.sqrt(cov[1, 1]) for mu, cov in zip(mus, covs)], 'r--')
+plt.xlabel('Time [s]', fontsize=16)
+plt.ylabel('Velocity [m/s]', fontsize=16)
+
+# plt.rcParams['font.size'] = '16'
+plt.figlegend(['True value', 'Estimated value', 'MSE+', 'MSE-'], loc='lower right', fontsize=12)
+fig.tight_layout()
 plt.show()
-plt.ginput(-1)
-
-
-
-

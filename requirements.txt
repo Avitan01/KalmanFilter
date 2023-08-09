@@ -1,5 +1,6 @@
 numpy
 pytest
-matplotlib
+matplotlib==3.7.2
 ipython
 pytest
+addcopyfighandler

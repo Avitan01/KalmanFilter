@@ -4,7 +4,8 @@ import numpy as np
 class Rocket:
     G = 9.81
     FALCON_ACCEL = 5 * 9.81
-    TIME_SEG = 1000
+    TIME_STEP = 0.1
+    MAX_SPEED = 9310  # [m/s]
 
     def __init__(self, initial_height: float, initial_velocity: float, initial_acceleration: float,
                  launch_duration: float, total_duration: float) -> None:
@@ -13,17 +14,25 @@ class Rocket:
         self._a = initial_acceleration
         self._launch_duration = launch_duration  # [s]
         self._total_duration = total_duration  # [s]
-        self._flight_log = []
-        self.time = np.linspace(0, self._total_duration, self.TIME_SEG)
+        self._flight_log = {'h': [], 'v': []}
+        self._time = np.arange(0, self._total_duration + 1, self.TIME_STEP)
 
     def launch(self):
         print('Lift off')
-        dt = self._total_duration / self.TIME_SEG
-        for curr_time in self.time:
-            self._flight_log.append(self._h)
+        dt = self.TIME_STEP
+        for curr_time in self._time:
+            self._flight_log['h'].append(self._h)
+            self._flight_log['v'].append(self._v)
             self.acceleration(curr_time)
             self.velocity(dt)
             self.height(dt)
+
+    def update_flight(self, curr_time: float, dt: float) -> None:
+        self._flight_log['h'].append(self._h)
+        self._flight_log['v'].append(self._v)
+        self.acceleration(curr_time)
+        self.velocity(dt)
+        self.height(dt)
 
     def height(self, dt) -> None:
         if self._h < 0:
@@ -40,6 +49,8 @@ class Rocket:
             self._a = 0
         else:
             self._a = self.FALCON_ACCEL
+        if self._v > self.MAX_SPEED:
+            self._a = 0
 
     @property
     def pos(self) -> float:
@@ -54,5 +65,17 @@ class Rocket:
         return self._a
 
     @property
-    def flight_log(self) -> list:
+    def time_vec(self) -> np.array:
+        return self._time
+
+    @property
+    def time_interval(self) -> float:
+        return self.TIME_STEP
+
+    @property
+    def flight_duration(self) -> float:
+        return self._total_duration
+
+    @property
+    def flight_log(self) -> dict:
         return self._flight_log
