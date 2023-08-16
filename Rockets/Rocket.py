@@ -4,7 +4,7 @@ import numpy as np
 class Rocket:
     G = 9.81
     FALCON_ACCEL = 5 * 9.81
-    TIME_STEP = 0.1
+    TIME_STEP = 0.01
     MAX_SPEED = 9310  # [m/s]
 
     def __init__(self, initial_height: float, initial_velocity: float, initial_acceleration: float,
@@ -15,7 +15,7 @@ class Rocket:
         self._launch_duration = launch_duration  # [s]
         self._total_duration = total_duration  # [s]
         self._flight_log = {'h': [], 'v': []}
-        self._time = np.arange(0, self._total_duration + 1, self.TIME_STEP)
+        self._time = np.arange(0, self._total_duration, self.TIME_STEP)
 
     def launch(self):
         print('Lift off')
@@ -48,7 +48,7 @@ class Rocket:
         if total_time > self._launch_duration:
             self._a = 0
         else:
-            self._a = self.FALCON_ACCEL
+            self._a = self.FALCON_ACCEL - (total_time / self._total_duration) * self.FALCON_ACCEL
         if self._v > self.MAX_SPEED:
             self._a = 0
 

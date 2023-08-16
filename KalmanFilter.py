@@ -15,6 +15,7 @@ class KalmanFilter:
                  initial_v: float,
                  initial_a: float,
                  initial_g: float,
+                 initial_P: float,
                  accel_variance: float) -> None:
         """Create a Kalman Filter object
             Args:
@@ -22,6 +23,7 @@ class KalmanFilter:
                 initial_v(float): Initial estimation of the velocity magnitude.
                 initial_a(float): Initial known acceleration profile.
                 initial_g(float): Initial known gravity acceleration.
+                initial_P(float): The gain for the initial P matrix.
                 accel_variance(float): Variance of acceleration disturbance"""
         # Mean of state Gaussian Random Variable
         self._x = np.zeros(self.NUMVARS)
@@ -33,9 +35,10 @@ class KalmanFilter:
         self._u[self.iG] = initial_g
         self._Q = 0  # Inputs covariance
         # Covariance of state Gaussian Random Variable
-        self._P = np.eye(self.NUMVARS)
+        self._P = initial_P*np.eye(self.NUMVARS)
         self._accel_variance = accel_variance  # Process noise
         self._I = np.eye(self.NUMVARS)
+        self._z_innovation = 0
 
     def predict(self, dt: float) -> None:
         """Predict the next state base on the systems model
@@ -65,6 +68,7 @@ class KalmanFilter:
         # self._x/P at the last lines refers to the estimation of x(k+1|k+1)
         H = np.array([1, 0]).reshape((1, 2))  # Observation matrix
         z = np.array([meas_values])  # Measurement
+        self._z_innovation = H.dot(self._x)
         R = np.array([meas_variance])  # Variance measured
 
         y = z - H.dot(self._x)
@@ -91,3 +95,9 @@ class KalmanFilter:
     @property
     def cov(self) -> np.array:
         return self._P
+
+    @property
+    def innovation(self) -> float:
+        if isinstance(self._z_innovation, np.ndarray):
+            return self._z_innovation[0]
+        return self._z_innovation

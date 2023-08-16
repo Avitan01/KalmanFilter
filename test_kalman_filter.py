@@ -11,8 +11,9 @@ class TestKF(unittest.TestCase):
         v = 2.3
         a = 0
         g = 9.81
+        P = 100
 
-        kf = KF(initial_x=x, initial_v=v, initial_a=a, initial_g=g, accel_variance=1.2)
+        kf = KF(initial_x=x, initial_v=v, initial_a=a, initial_g=g, initial_P=P , accel_variance=1.2)
         self.assertAlmostEqual(kf.pos, x)
         self.assertAlmostEqual(kf.vel, v)
 
@@ -21,8 +22,9 @@ class TestKF(unittest.TestCase):
         v = 2.3
         a = 0
         g = 9.81
+        P = 100
 
-        kf = KF(initial_x=x, initial_v=v, initial_a=a, initial_g=g, accel_variance=1.2)
+        kf = KF(initial_x=x, initial_v=v, initial_a=a, initial_g=g, initial_P=P, accel_variance=1.2)
         kf.predict(dt=0.1)
 
         self.assertEqual(kf.mean.shape, (2, ))
@@ -33,8 +35,9 @@ class TestKF(unittest.TestCase):
         v = 2.3
         a = 0
         g = 9.81
+        P = 100
 
-        kf = KF(initial_x=x, initial_v=v, initial_a=a, initial_g=g, accel_variance=1.2)
+        kf = KF(initial_x=x, initial_v=v, initial_a=a, initial_g=g, initial_P=P, accel_variance=1.2)
         kf.predict(dt=0.1)
 
         for i in range(10):
@@ -49,8 +52,9 @@ class TestKF(unittest.TestCase):
         v = 2.3
         a = 0
         g = 9.81
+        P = 100
 
-        kf = KF(initial_x=x, initial_v=v, initial_a=a, initial_g=g, accel_variance=1.2)
+        kf = KF(initial_x=x, initial_v=v, initial_a=a, initial_g=g, initial_P=P, accel_variance=1.2)
         det_before = np.linalg.det(kf.cov)
         kf.update(meas_values=0.1, meas_variance=0.1)
         det_after = np.linalg.det(kf.cov)
