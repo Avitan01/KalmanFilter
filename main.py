@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
+import addcopyfighandler
 
 from KalmanFilter import KalmanFilter as KF
 from Rockets.Rocket import Rocket
@@ -19,7 +20,8 @@ accel_var = 0.5
 R_covariance = 2 ** 2
 MEAS_EVERY_STEPS = 50
 delay = 1
-
+random_delay = True
+# Simulation
 rocket_type = 'real'
 if rocket_type == 'real':
     rocket = Rocket(initial_height=h0, initial_velocity=v0, initial_acceleration=a0,
@@ -43,7 +45,10 @@ for i, time in enumerate(rocket.time_vec):
     kf.predict(dt=DT)
     if (i != 0) and (i % MEAS_EVERY_STEPS) == 0:
         if delay:
-            time_delay = -int(delay // rocket.TIME_STEP)
+            if random_delay:
+                time_delay = -int(np.random.random_sample() // rocket.TIME_STEP)
+            else:
+                time_delay = -int(delay // rocket.TIME_STEP)
             if len(rocket.flight_log['h']) < abs(time_delay):
                 position = rocket.flight_log['h'][0]
             else:
